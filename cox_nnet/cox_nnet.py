@@ -264,6 +264,7 @@ def defineCVParams(cv_params):
     
 def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), search_params = dict(), verbose=False):
 
+    print("trainCoxMlp: START of trainCoxMlp function")
     L2_reg, node_map, input_split = defineModelParams(model_params)
     method, learning_rate, momentum, lr_decay, lr_growth, eval_step, max_iter, stop_threshold, patience, patience_incr, rand_seed = defineSearchParams(search_params)
     
@@ -340,13 +341,13 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
     updates = []
     if method == "momentum":
         updates = momentumUpdate(cost, model.params, learning_rate, momentum)
-        print("Using momentum gradient")
+        print("trainCoxMlp: Using momentum gradient")
     elif method == "nesterov":
         updates = nesterovUpdate(cost, model.params, learning_rate, momentum)
-        print("Using nesterov accelerated gradient")
+        print("trainCoxMlp: Using nesterov accelerated gradient")
     else:
         updates = momentumUpdate(cost, model.params, learning_rate, 0)
-        print("Using gradient descent")
+        print("trainCoxMlp: Using gradient descent")
     
     #gradiant example based on http://deeplearning.net/tutorial/code/mlp.py
     # g_W = T.grad(cost=cost, wrt=model.W)
@@ -364,7 +365,7 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
     
     start = time.time()
     best_cost = numpy.inf
-    print("training model")
+    print("trainCoxMlp: training model")
     for iter in xrange(max_iter):
         train_model(iter)
         #print cost_iter
@@ -393,8 +394,8 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
                 
         #print cost_iter
     
-    print(('running time: %f seconds') % (time.time() - start))
-    print(('total iterations: %f') % (iter))
+    print(('trainCoxMlp: running time: %f seconds') % (time.time() - start))
+    print(('trainCoxMlp: total iterations: %f') % (iter))
     return(model, cost_iter)
 
 
