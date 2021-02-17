@@ -445,45 +445,47 @@ def CIndex(model, x_test, ytime_test, ystatus_test):
     
 def crossValidate(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
 
-    print("Start of crossValidate function")
+    print("crossValidate: START of crossValidate function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
-    print("CV cp1")
+    print("crossValidate: cp1")
 
     N_train = ytime_train.shape[0]
     cv_likelihoods = numpy.zeros([n_folds], dtype=numpy.dtype("float64"))
-    print("CV cp2")
+    print("crossValidate: cp2")
     #cv_folds=cross_validation.KFold(N_train,n_folds=n_folds, shuffle=True, random_state=cv_seed)
     cv_folds=model_selection.KFold(n_splits=n_folds, shuffle=True, random_state=cv_seed)
-    print("CV cp3")
+    print("crossValidate: cp3")
     k=0
     for traincv, testcv in cv_folds.split(x_train):
+        print("crossValidate:")
         print("TRAIN:", traincv, "TEST:", testcv)
         x_train_cv = x_train[traincv]
         ytime_train_cv = ytime_train[traincv]
         ystatus_train_cv = ystatus_train[traincv]
 	
-        print("CV mini cp1")
+        print("crossValidate: mini cp1")
         model, cost_iter = trainCoxMlp(x_train = x_train_cv, ytime_train = ytime_train_cv, ystatus_train = ystatus_train_cv, model_params = model_params, search_params = search_params, verbose=verbose)
         
-        print("CV mini cp2")
+        print("crossValidate: mini cp2")
         x_test_cv = x_train[testcv]
         ytime_test_cv = ytime_train[testcv]
         ystatus_test_cv = ystatus_train[testcv]
         
-        print("CV mini cp3")
+        print("crossValidate: mini cp3")
         if cv_metric == "loglikelihood":
             cv_likelihoods[k] = CVLoglikelihood(model, x_train, ytime_train, ystatus_train, x_train_cv, ytime_train_cv, ystatus_train_cv)
         else:
             cv_likelihoods[k] = CIndex(model, x_test_cv, ytime_test_cv, ystatus_test_cv)
         k += 1
-        print("END of CV mini cps")        
+        print("crossValidate: END of CV: mini cps and for loops")        
         
     return(cv_likelihoods)
-    print("End of crossValidate function")
+    print("crossValidate: Return cv_likelihoods: ", cv_likelihoods)
+    print("crossValidate: END of crossValidate function")
 
 def L2CVSearch(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     
-    print("Start of L2CVSearch function")
+    print("L2CVSearch: START of L2CVSearch function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
     
     N_train = ytime_train.shape[0]
@@ -531,36 +533,38 @@ def L2CVSearch(x_train, ytime_train, ystatus_train, model_params = dict(),search
     idx = numpy.argsort(L2_reg_params)
     return(cv_likelihoods[idx], L2_reg_params[idx], mean_cvpl[idx])
     # return(cv_likelihoods, L2_reg_params, mean_cvpl, best_L2s)
-    print("End of L2CVSearch function")    
+    print("L2CVSearch: END of L2CVSearch function")    
 
 def L2CVProfile(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     
-    print("Start of L2CVProfile function")
+    print("L2CVProfile: START of L2CVProfile function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
 
-    print("check point 1")
+    print("L2CVProfile: check point 1")
     N_train = ytime_train.shape[0]
 
-    print("check point 2")
+    print("L2CVProfile: check point 2")
     cv_likelihoods = numpy.zeros([len(L2_range), n_folds], dtype=float)
     mean_cvpl = numpy.zeros(len(L2_range), dtype="float")
     
-    print("check point 3")
-    print("L2_range is:", L2_range)
-    print("len(L2_range) is:", len(L2_range))
-    print("range of length of l2range is:", range(len(L2_range)))
+    print("L2CVProfile: check point 3")
+    print("L2CVProfile: L2_range is:", L2_range)
+    print("L2CVProfile: len(L2_range) is:", len(L2_range))
+    print("L2CVProfile: range of length of l2range is:", range(len(L2_range)))
     for i in xrange(len(L2_range)):
-        print("i in range(len(L2_range)) is: ", i)
-        print("mini cp1")
+        print("L2CVProfile: i in range(len(L2_range)) is: ", i)
+        print("L2CVProfile: mini cp1")
         model_params['L2_reg'] = numpy.exp(L2_range[i])
         cvpl = crossValidate(x_train, ytime_train, ystatus_train, model_params, search_params, cv_params, verbose=verbose)
-        print("mini cp2")      
+        print("L2CVProfile: mini cp2")      
         cv_likelihoods[i] = cvpl
         mean_cvpl[i] = numpy.mean(cvpl)
-        print("mini cp3")
+        print("L2CVProfile: mini cp3")
+	print("L2CVProfile: END of mini cps and for loop")
 	
     return(cv_likelihoods, L2_range, mean_cvpl)
-    print("End of L2CVProfile function")    
+    print("L2CVProfile: cv_likelihood is:", cv_likelihoods, "\n", "L2_range is:", L2_range, "\n", "and mean_cvpl is:", mean_cvpl)
+    print("L2CVProfile: END of L2CVProfile function")    
 
 def L2Profile(x_train, ytime_train, ystatus_train, x_validation, ytime_validation, ystatus_validation, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
@@ -582,9 +586,7 @@ def L2Profile(x_train, ytime_train, ystatus_train, x_validation, ytime_validatio
         
         
     return(likelihoods, L2_range)
-    
 
-    
     
 def varImportance(model, x_train, ytime_train, ystatus_train):
     N_train = ytime_train.shape[0]
