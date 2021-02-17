@@ -21,8 +21,13 @@ import numpy
 import theano
 import random
 import theano.tensor as T
-from sklearn import cross_validation
-import cPickle
+#from sklearn import cross_validation
+from sklearn import model_selection
+#import cPickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 theano.config.openmp=True
    
@@ -328,13 +333,13 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
     updates = []
     if method == "momentum":
         updates = momentumUpdate(cost, model.params, learning_rate, momentum)
-        print "Using momentum gradient"
+        print("Using momentum gradient")
     elif method == "nesterov":
         updates = nesterovUpdate(cost, model.params, learning_rate, momentum)
-        print "Using nesterov accelerated gradient"
+        print("Using nesterov accelerated gradient")
     else:
         updates = momentumUpdate(cost, model.params, learning_rate, 0)
-        print "Using gradient descent"
+        print("Using gradient descent")
     
     #gradiant example based on http://deeplearning.net/tutorial/code/mlp.py
     # g_W = T.grad(cost=cost, wrt=model.W)
@@ -352,7 +357,7 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
     
     start = time.time()
     best_cost = numpy.inf
-    print "training model"
+    print("training model")
     for iter in xrange(max_iter):
         train_model(iter)
         #print cost_iter
@@ -363,11 +368,11 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
                 best_cost = cost_iter
                 learning_rate.set_value(numpy.float32(learning_rate.get_value() * lr_decay))
                 if verbose == 2:
-                    print (('Decreasing learning rate: %f') % (learning_rate.get_value()))
+                    print(('Decreasing learning rate: %f') % (learning_rate.get_value()))
             else:
                 learning_rate.set_value(numpy.float32(learning_rate.get_value() * lr_growth))
                 if verbose == 2:
-                    print (('Increasing learning rate: %f') % (learning_rate.get_value()))
+                    print(('Increasing learning rate: %f') % (learning_rate.get_value()))
             
             if cost_iter < best_cost * stop_threshold:
                 best_cost = cost_iter
@@ -381,8 +386,8 @@ def trainCoxMlp(x_train, ytime_train, ystatus_train, model_params = dict(), sear
                 
         #print cost_iter
     
-    print (('running time: %f seconds') % (time.time() - start))
-    print (('total iterations: %f') % (iter))
+    print(('running time: %f seconds') % (time.time() - start))
+    print(('total iterations: %f') % (iter))
     return(model, cost_iter)
 
 
@@ -433,34 +438,45 @@ def CIndex(model, x_test, ytime_test, ystatus_test):
     
 def crossValidate(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
 
+    print("Start of crossValidate function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
+    print("CV cp1")
 
     N_train = ytime_train.shape[0]
     cv_likelihoods = numpy.zeros([n_folds], dtype=numpy.dtype("float64"))
-    cv_folds=cross_validation.KFold(N_train,n_folds=n_folds, shuffle=True, random_state=cv_seed)
+    print("CV cp2")
+    #cv_folds=cross_validation.KFold(N_train,n_folds=n_folds, shuffle=True, random_state=cv_seed)
+    cv_folds=model_selection.KFold(n_splits=n_folds, shuffle=True, random_state=cv_seed)
+    print("CV cp3")
     k=0
-    for traincv, testcv in cv_folds:
+    for traincv, testcv in cv_folds.split(x_train):
+        print("TRAIN:", traincv, "TEST:", testcv)
         x_train_cv = x_train[traincv]
         ytime_train_cv = ytime_train[traincv]
         ystatus_train_cv = ystatus_train[traincv]
+	
+        print("CV mini cp1")
+	model, cost_iter = trainCoxMlp(x_train = x_train_cv, ytime_train = ytime_train_cv, ystatus_train = ystatus_train_cv, model_params = model_params, search_params = search_params, verbose=verbose)
         
-        model, cost_iter = trainCoxMlp(x_train = x_train_cv, ytime_train = ytime_train_cv, ystatus_train = ystatus_train_cv, model_params = model_params, search_params = search_params, verbose=verbose)
-        
+        print("CV mini cp2")
         x_test_cv = x_train[testcv]
         ytime_test_cv = ytime_train[testcv]
         ystatus_test_cv = ystatus_train[testcv]
         
+        print("CV mini cp3")
         if cv_metric == "loglikelihood":
             cv_likelihoods[k] = CVLoglikelihood(model, x_train, ytime_train, ystatus_train, x_train_cv, ytime_train_cv, ystatus_train_cv)
         else:
             cv_likelihoods[k] = CIndex(model, x_test_cv, ytime_test_cv, ystatus_test_cv)
         k += 1
-        
+        print("END of CV mini cps")        
         
     return(cv_likelihoods)
+    print("End of crossValidate function")
 
 def L2CVSearch(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     
+    print("Start of L2CVSearch function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
     
     N_train = ytime_train.shape[0]
@@ -508,26 +524,37 @@ def L2CVSearch(x_train, ytime_train, ystatus_train, model_params = dict(),search
     idx = numpy.argsort(L2_reg_params)
     return(cv_likelihoods[idx], L2_reg_params[idx], mean_cvpl[idx])
     # return(cv_likelihoods, L2_reg_params, mean_cvpl, best_L2s)
-    
+    print("End of L2CVSearch function")    
 
 def L2CVProfile(x_train, ytime_train, ystatus_train, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     
+    print("Start of L2CVProfile function")
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
 
+    print("check point 1")
     N_train = ytime_train.shape[0]
-    
+
+    print("check point 2")
     cv_likelihoods = numpy.zeros([len(L2_range), n_folds], dtype=float)
     mean_cvpl = numpy.zeros(len(L2_range), dtype="float")
     
-    for i in xrange(len(L2_range)):
+    print("check point 3")
+    print("L2_range is:", L2_range)
+    print("len(L2_range) is:", len(L2_range))
+    print("range of length of l2range is:", range(len(L2_range)))
+    #for i in xrange(len(L2_range)):
+    for i in range(len(L2_range)):
+        print("i in range(len(L2_range)) is: ", i)
+        print("mini cp1")
         model_params['L2_reg'] = numpy.exp(L2_range[i])
         cvpl = crossValidate(x_train, ytime_train, ystatus_train, model_params, search_params, cv_params, verbose=verbose)
-        
+        print("mini cp2")      
         cv_likelihoods[i] = cvpl
         mean_cvpl[i] = numpy.mean(cvpl)
-        
+        print("mini cp3")
+	
     return(cv_likelihoods, L2_range, mean_cvpl)
-    
+    print("End of L2CVProfile function")    
 
 def L2Profile(x_train, ytime_train, ystatus_train, x_validation, ytime_validation, ystatus_validation, model_params = dict(),search_params = dict(),cv_params = dict(), verbose=False):
     cv_seed, n_folds, cv_metric, search_iters, L2_range = defineCVParams(cv_params)
@@ -567,7 +594,7 @@ def varImportance(model, x_train, ytime_train, ystatus_train):
     PL_mod = numpy.zeros([x_train.shape[1]])
     for k in xrange(x_train.shape[1]):
         if (k+1) % 100 == 0:
-            print str(k+1) + "..."
+            print(str(k+1) + "...")
             
         xk_mean = numpy.mean(x_train[:,k])
         xk_train = numpy.copy(x_train)
