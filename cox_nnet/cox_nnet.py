@@ -29,6 +29,13 @@ try:
 except:
     import pickle
 
+try:
+    # Python 2
+    xrange
+except NameError:
+    # Python 3, xrange is now named range
+    xrange = range
+	
 theano.config.openmp=True
    
 def mTest():
