@@ -549,8 +549,7 @@ def L2CVProfile(x_train, ytime_train, ystatus_train, model_params = dict(),searc
     print("L2_range is:", L2_range)
     print("len(L2_range) is:", len(L2_range))
     print("range of length of l2range is:", range(len(L2_range)))
-    #for i in xrange(len(L2_range)):
-    for i in range(len(L2_range)):
+    for i in xrange(len(L2_range)):
         print("i in range(len(L2_range)) is: ", i)
         print("mini cp1")
         model_params['L2_reg'] = numpy.exp(L2_range[i])
