@@ -1,6 +1,6 @@
 import sys, os
 #sys.path.append("/home/travers/WindowsDesktop/cox-nnet/cox_nnet")
-sys.path.append("./cox-nnet/cox-nnet/")
+sys.path.append("./cox-nnet/cox_nnet/")
 
 from cox_nnet import cox_nnet as cnn
 import numpy
