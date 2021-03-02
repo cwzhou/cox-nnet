@@ -37,7 +37,7 @@ dev.off()
 as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ystatus_test.csv")) -> event_test
 as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ytime_test.csv")) -> time_test
 readLines("Comparison/cox-nnet/results/WHAS_theta.csv") -> pred
-plotCoxMLP(pred, time_test, event_test, "Comparison/cox-nnet/results/WHAS_PBC_survival_curves.png", "WHAS median split")]
+plotCoxMLP(pred, time_test, event_test, "Comparison/cox-nnet/results/WHAS_PBC_survival_curves.png", "WHAS median split")
 
 
 
