@@ -26,7 +26,7 @@ se <- function(x) sd(x)/sqrt(length(x))
 se <- apply(cvll, 1, se)
 mean <- apply(cvll, 1, mean)
 data <- data.frame(L2, mean, se)
-png("WHAS_PBC_cv_likelihoods.png", width = 360, height = 360)
+png("Comparison/cox-nnet/results/WHAS_PBC_cv_likelihoods.png", width = 360, height = 360)
 g <- ggplot(data, aes(x=L2, y=mean)) + 
     geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.1) +
     geom_line() +
@@ -37,4 +37,27 @@ dev.off()
 as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ystatus_test.csv")) -> event_test
 as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ytime_test.csv")) -> time_test
 readLines("Comparison/cox-nnet/results/WHAS_theta.csv") -> pred
-plotCoxMLP(pred, time_test, event_test, "WHAS_PBC_survival_curves.png", "WHAS median split")
+plotCoxMLP(pred, time_test, event_test, "Comparison/cox-nnet/results/WHAS_PBC_survival_curves.png", "WHAS median split")]
+
+
+
+## Plots for KIRC
+read.csv("Comparison/cox-nnet/results/WHAS_likelihoods_KIRC.csv", header=F) -> cvll
+L2 <- seq(-3,1.67,0.33)
+
+se <- function(x) sd(x)/sqrt(length(x))
+se <- apply(cvll, 1, se)
+mean <- apply(cvll, 1, mean)
+data <- data.frame(L2, mean, se)
+png("KIRC_cindex.png", width = 360, height = 360)
+g <- ggplot(data, aes(x=L2, y=mean)) + 
+    geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.1) +
+    geom_line() +
+    geom_point() + labs(title = "KIRC C-Index vs. L2 parameter")
+print(g)
+dev.off()
+
+as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ystatus_test_KIRC.csv")) -> event_test
+as.numeric(readLines("Comparison/cox-nnet/results/WHAS_ytime_test_KIRC.csv")) -> time_test
+readLines("Comparison/cox-nnet/results/WHAS_theta_KIRC.csv") -> pred
+plotCoxMLP(pred, time_test, event_test, "Comparison/cox-nnet/results/WHAS_KIRC_survival_curves.png", "WHAS median split")
